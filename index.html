@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Φυσική Β΄ Λυκείου — Προσομοίωση εξεταστικής</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<script>
+window.MathJax = { tex: { inlineMath: [['\\(', '\\)']] }, output: { linebreaks: { inline: true, width: '100%' }, displayOverflow: 'linebreak' }, startup: { typeset: false } };
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@4.1.3/tex-chtml.js" async></script>
+<script src="config.js?v=2"></script>
+<script>
+(function () { var id = (new URLSearchParams(location.search).get('exam') || 'kef1').replace(/[^a-z0-9-]/g, '');
+  document.write('<script src="exams/' + id + '.js?v=3"><\/script>'); })();
+</script>
+<style>
+  :root { --ink:#1d2433; --muted:#5d6678; --line:#dfe3ea; --accent:#1f5fa8; --bg:#f6f7f9; --ok:#1e7f4f; --bad:#b3261e; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: Inter, system-ui, sans-serif; color:var(--ink); background:var(--bg); }
+  header { position: sticky; top:0; z-index:5; background:#fff; border-bottom:1px solid var(--line); padding:10px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+  header .brand { font-weight:700; font-size:15px; }
+  header .brand small { display:block; font-weight:500; color:var(--muted); font-size:12px; }
+  #timer { font-variant-numeric: tabular-nums; font-weight:700; font-size:18px; padding:4px 10px; border-radius:8px; background:#eef3fa; color:var(--accent); }
+  #timer.low { background:#fdecea; color:var(--bad); }
+  main { max-width: 820px; margin: 0 auto; padding: 18px 14px 80px; }
+  .card { background:#fff; border:1px solid var(--line); border-radius:12px; padding:18px; margin-bottom:16px; }
+  h1 { font-size:22px; margin:0 0 4px; } h2 { font-size:18px; margin:0 0 10px; }
+  .muted { color:var(--muted); }
+  .theme-title { display:flex; justify-content:space-between; align-items:baseline; border-bottom:2px solid var(--ink); padding-bottom:6px; margin-bottom:12px; }
+  .theme-title h2 { margin:0; letter-spacing:.5px; }
+  .stem, .intro { font-family: "Source Serif 4", Georgia, serif; font-size:17px; line-height:1.55; }
+  .intro { margin: 0 0 12px; }
+  .part { margin: 14px 0 18px; }
+  .part-label { font-weight:700; margin-right:6px; }
+  .q { padding: 10px 0; border-top: 1px dashed var(--line); }
+  .q:first-of-type { border-top: none; }
+  .pts { font-size:12px; color:var(--muted); white-space:nowrap; }
+  .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:8px; }
+  .opt { display:flex; gap:10px; align-items:flex-start; padding:8px 10px; border:1px solid var(--line); border-radius:8px; margin-top:6px; cursor:pointer; }
+  .opt:hover { background:#f3f6fb; } .opt input { margin-top:5px; }
+  .tf button, .sel button { border:1px solid var(--line); background:#fff; padding:8px 16px; border-radius:8px; font-size:15px; cursor:pointer; font-family:inherit; }
+  .tf button.on, .sel button.on { background:var(--accent); color:#fff; border-color:var(--accent); }
+  input[type=text] { font-size:17px; padding:8px 10px; border:1px solid #c8ced8; border-radius:8px; width:130px; font-family:inherit; }
+  input[type=text]:focus { outline:2px solid #bcd3f0; border-color:var(--accent); }
+  label.field { display:flex; align-items:center; gap:6px; font-family:"Source Serif 4", Georgia, serif; font-size:17px; }
+  .form input { width:100%; margin:4px 0 12px; }
+  .btn { background:var(--accent); color:#fff; border:none; padding:12px 20px; border-radius:10px; font-size:16px; font-weight:600; cursor:pointer; font-family:inherit; }
+  .btn:disabled { opacity:.5; cursor:default; }
+  .btn.ghost { background:#fff; color:var(--accent); border:1px solid var(--accent); }
+  .help { font-size:13px; color:var(--muted); }
+  .result-big { font-size:40px; font-weight:700; color:var(--accent); }
+  table.res { width:100%; border-collapse:collapse; font-size:14px; }
+  table.res td, table.res th { border-bottom:1px solid var(--line); padding:6px; text-align:left; }
+  .ok { color:var(--ok); font-weight:700; } .bad { color:var(--bad); font-weight:700; }
+  .keys { display:flex; gap:6px; } .key { border:1px solid var(--line); background:#f3f6fb; border-radius:8px; width:38px; height:38px; font-size:17px; cursor:pointer; font-family:"Source Serif 4", Georgia, serif; }
+  .err { background:#fdecea; color:var(--bad); padding:10px 12px; border-radius:8px; margin-top:10px; }
+  .unit { margin-left:6px; color:#444; }
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">νεο επικεντρο · Φυσική Β΄ Λυκείου<small id="hdr-sub">Προσομοίωση εξεταστικής</small></div>
+  <div id="timer" hidden>3:00:00</div>
+</header>
+<main id="root"></main>
+
+<script>
+(function () {
+  const root = document.getElementById('root');
+  const params = new URLSearchParams(location.search);
+  const examId = params.get('exam') || 'kef1';
+  const EX = (window.EXAMS || {})[examId];
+  const KEY = 'fysb-' + examId;
+  const store = {
+    get() { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } },
+    set(v) { try { localStorage.setItem(KEY, JSON.stringify(v)); } catch (e) {} }
+  };
+  let S = store.get();          // { name, tmima, startedAt, answers:{}, done, result }
+  S.answers = S.answers || {};
+  let tick = null;
+
+  function typeset() { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([root]).catch(() => {}); else setTimeout(typeset, 300); }
+  function esc(s) { return String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+  /* Μέσα στα \( \) τα < και > γίνονται \lt / \gt, για να μην τα διαβάσει ο browser ως HTML */
+  function mathSafe(s) { return String(s).replace(/\\\(([\s\S]*?)\\\)/g, (m, b) => '\\(' + b.replace(/</g, '\\lt ').replace(/>/g, '\\gt ') + '\\)'); }
+  (function () { const ex = (window.EXAMS || {})[new URLSearchParams(location.search).get('exam') || 'kef1']; if (!ex) return;
+    ex.themes.forEach(t => { if (t.intro) t.intro = mathSafe(t.intro); t.parts.forEach(p => { if (p.intro) p.intro = mathSafe(p.intro);
+      p.questions.forEach(q => { q.stem = mathSafe(q.stem); if (q.options) q.options = q.options.map(mathSafe); if (q.prefix) q.prefix = mathSafe(q.prefix); if (q.unit) q.unit = mathSafe(q.unit); }); }); }); })();
+  function allQuestions() { const out = []; EX.themes.forEach(t => t.parts.forEach(p => p.questions.forEach(q => out.push(q)))); return out; }
+
+  if (!EX) { root.innerHTML = '<div class="card"><h2>Δεν βρέθηκε το διαγώνισμα.</h2></div>'; return; }
+  document.getElementById('hdr-sub').textContent = EX.title;
+
+  if (S.done) return showResult();
+  if (S.startedAt) return startExam();
+  showStart();
+
+  /* ---------- Αρχική οθόνη ---------- */
+  function showStart() {
+    root.innerHTML = `
+      <div class="card">
+        <h1>${esc(EX.title)}</h1>
+        <div class="muted" style="margin-bottom:14px">${esc(EX.subtitle)}</div>
+        <p>Το διαγώνισμα έχει <b>4 θέματα (Α–Δ)</b> και διάρκεια <b>${EX.minutes / 60} ώρες</b>. Γράφεις στο τετράδιό σου τη λύση και εδώ συμπληρώνεις μόνο το <b>τελικό αποτέλεσμα</b>.</p>
+        <ul class="help" style="line-height:1.7">
+          <li>Αριθμούς μπορείς να τους γράψεις ως ακέραιους (−3), δεκαδικούς (0,5), κλάσματα (1/2) ή με ρίζα (10√13). Σε όλους τους υπολογισμούς g = 10 m/s².</li>
+          <li>Στο Θέμα Β επιλέγεις εδώ τη σωστή απάντηση· την <b>αιτιολόγηση</b> τη γράφεις στο τετράδιό σου.</li>
+          <li>Οι απαντήσεις αποθηκεύονται αυτόματα σε αυτή τη συσκευή.</li>
+          <li><b>Υποβάλλεις μόνο μία φορά.</b> Όταν τελειώσει ο χρόνος, το διαγώνισμα υποβάλλεται αυτόματα.</li>
+        </ul>
+        <div class="form" style="margin-top:14px">
+          <label>Ονοματεπώνυμο<input type="text" id="f-name" autocomplete="name" placeholder="π.χ. Γιώργος Παπαδόπουλος"></label>
+          <label>Τμήμα<input type="text" id="f-tmima" placeholder="π.χ. Β1"></label>
+        </div>
+        <button class="btn" id="go">Έναρξη διαγωνίσματος</button>
+        <div id="start-err"></div>
+      </div>`;
+    document.getElementById('go').onclick = () => {
+      const name = document.getElementById('f-name').value.trim().replace(/\s+/g, ' ');
+      const tmima = document.getElementById('f-tmima').value.trim();
+      if (name.split(' ').length < 2) { document.getElementById('start-err').innerHTML = '<div class="err">Γράψε όνομα και επώνυμο.</div>'; return; }
+      if (!confirm('Ξεκινάει ο χρόνος των ' + (EX.minutes / 60) + ' ωρών. Συνέχεια;')) return;
+      S = { name, tmima, startedAt: Date.now(), answers: {} };
+      store.set(S); startExam();
+    };
+  }
+
+  /* ---------- Διαγώνισμα ---------- */
+  function startExam() {
+    const endAt = S.startedAt + EX.minutes * 60000;
+    const tEl = document.getElementById('timer'); tEl.hidden = false;
+    const upd = () => {
+      const left = Math.max(0, endAt - Date.now());
+      const h = Math.floor(left / 3600000), m = Math.floor(left % 3600000 / 60000), s = Math.floor(left % 60000 / 1000);
+      tEl.textContent = h + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+      tEl.classList.toggle('low', left < 10 * 60000);
+      if (left <= 0) { clearInterval(tick); submit(true); }
+    };
+    upd(); tick = setInterval(upd, 1000);
+
+    let html = `<div class="card"><h1>${esc(EX.title)}</h1><div class="muted">${esc(EX.subtitle)} · ${esc(S.name)}${S.tmima ? ' · ' + esc(S.tmima) : ''}</div></div>`;
+    EX.themes.forEach(t => {
+      html += `<div class="card"><div class="theme-title"><h2>${t.name}</h2><span class="pts">Μονάδες ${t.points}</span></div>`;
+      if (t.intro) html += `<p class="intro">${t.intro}</p>`;
+      t.parts.forEach(p => {
+        html += `<div class="part">`;
+        if (p.intro) html += `<p class="intro"><span class="part-label">${p.label}.</span>${p.intro}</p>`;
+        p.questions.forEach((q, i) => {
+          const lbl = (!p.intro && i === 0) ? `<span class="part-label">${p.label}.</span>` : (p.questions.length > 1 ? `<span class="part-label">${'αβγδεζηθ'[i]})</span>` : '');
+          html += `<div class="q" data-q="${q.id}"><div style="display:flex;justify-content:space-between;gap:10px"><div class="stem">${lbl}${q.stem}</div><span class="pts">${q.pts} μον.</span></div>${widget(q)}</div>`;
+        });
+        html += `</div>`;
+      });
+      html += `</div>`;
+    });
+    html += `<div class="card"><button class="btn" id="submit">Υποβολή διαγωνίσματος</button><div class="help" style="margin-top:8px">Μετά την υποβολή δεν μπορείς να αλλάξεις τις απαντήσεις σου.</div><div id="sub-err"></div></div>`;
+    root.innerHTML = html;
+    bind(); typeset();
+    document.getElementById('submit').onclick = () => {
+      const empty = allQuestions().filter(q => isEmpty(S.answers[q.id])).length;
+      if (!confirm((empty ? 'Έχεις ' + empty + ' αναπάντητα ερωτήματα. ' : '') + 'Οριστική υποβολή;')) return;
+      submit(false);
+    };
+  }
+
+  function widget(q) {
+    const a = S.answers[q.id];
+    if (q.type === 'tf') return `<div class="row tf">${['Σ', 'Λ'].map(v => `<button type="button" data-v="${v}" class="${a === v ? 'on' : ''}">${v}</button>`).join('')}</div>`;
+    if (q.type === 'select') return `<div class="row sel">${q.options.map((o, i) => `<button type="button" data-v="${i}" class="${a === i ? 'on' : ''}">${o}</button>`).join('')}</div>`;
+    if (q.type === 'choice') return q.options.map((o, i) => `<label class="opt"><input type="radio" name="${q.id}" value="${i}" ${a === i ? 'checked' : ''}><span class="stem">${'αβγδε'[i]}. ${o}</span></label>`).join('');
+    if (q.type === 'num') return `<div class="row"><label class="field">${q.prefix || ''}<input type="text" data-k="v" value="${esc(a || '')}" autocomplete="off">${q.unit ? '<span class="unit">' + q.unit + '</span>' : ''}</label><span class="keys">${['π', '√', '/', '−'].map(c => `<button type="button" class="key" data-c="${c}">${c}</button>`).join('')}</span></div>`;
+    if (q.type === 'pair') { const v = a || {}; return `<div class="row"><label class="field">\\(x=\\)<input type="text" data-k="x" value="${esc(v.x || '')}" autocomplete="off"></label><label class="field">\\(y=\\)<input type="text" data-k="y" value="${esc(v.y || '')}" autocomplete="off"></label></div>`; }
+    return '';
+  }
+
+  function bind() {
+    root.querySelectorAll('.q').forEach(el => {
+      const id = el.dataset.q, q = allQuestions().find(x => x.id === id);
+      el.querySelectorAll('.tf button, .sel button').forEach(b => b.onclick = () => {
+        el.querySelectorAll('button').forEach(x => x.classList.remove('on')); b.classList.add('on');
+        S.answers[id] = q.type === 'tf' ? b.dataset.v : Number(b.dataset.v); store.set(S);
+      });
+      el.querySelectorAll('input[type=radio]').forEach(r => r.onchange = () => { S.answers[id] = Number(r.value); store.set(S); });
+      el.querySelectorAll('button.key').forEach(b => b.onclick = () => {
+        const inp = el.querySelector('input[type=text]'); const i = inp.selectionStart ?? inp.value.length;
+        inp.value = inp.value.slice(0, i) + b.dataset.c + inp.value.slice(inp.selectionEnd ?? i);
+        inp.focus(); inp.setSelectionRange(i + 1, i + 1); inp.dispatchEvent(new Event('input'));
+      });
+      el.querySelectorAll('input[type=text]').forEach(inp => inp.oninput = () => {
+        if (q.type === 'pair') { S.answers[id] = Object.assign({}, S.answers[id], { [inp.dataset.k]: inp.value }); }
+        else S.answers[id] = inp.value;
+        store.set(S);
+      });
+    });
+  }
+
+  function isEmpty(a) { return a === undefined || a === '' || (typeof a === 'object' && !String(a.x || '').trim() && !String(a.y || '').trim()); }
+
+  /* ---------- Υποβολή ---------- */
+  let sending = false;
+  async function submit(auto) {
+    if (sending) return; sending = true;
+    const btn = document.getElementById('submit'); if (btn) { btn.disabled = true; btn.textContent = 'Αποστολή…'; }
+    const payload = { exam: examId, name: S.name, tmima: S.tmima, startedAt: S.startedAt, finishedAt: Date.now(), auto, answers: S.answers };
+    try {
+      const r = await fetch(window.EXAM_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+      const res = await r.json();
+      if (!res.ok && res.error !== 'already') throw new Error(res.error || 'σφάλμα');
+      clearInterval(tick);
+      S.done = true; S.result = res; store.set(S); showResult();
+    } catch (e) {
+      sending = false;
+      if (btn) { btn.disabled = false; btn.textContent = 'Υποβολή διαγωνίσματος'; }
+      const box = document.getElementById('sub-err');
+      if (box) box.innerHTML = '<div class="err">Δεν έγινε η αποστολή (έλεγξε τη σύνδεση στο ίντερνετ) και πάτησε ξανά «Υποβολή». Οι απαντήσεις σου είναι αποθηκευμένες.</div>';
+    }
+  }
+
+  function showResult() {
+    document.getElementById('timer').hidden = true;
+    const r = S.result || {};
+    if (r.error === 'already') {
+      root.innerHTML = `<div class="card"><h1>Έχεις ήδη υποβάλει αυτό το διαγώνισμα</h1><p class="muted">Επιτρέπεται μόνο μία υποβολή.</p></div>`;
+      return;
+    }
+    const names = {}; EX.themes.forEach(t => t.parts.forEach(p => p.questions.forEach((q, i) => names[q.id] = p.label + (p.questions.length > 1 ? '.' + 'αβγδεζηθ'[i] : ''))));
+    const rows = (r.items || []).map(it => `<tr><td>${names[it.id] || it.id}</td><td class="${it.got === it.pts ? 'ok' : (it.got > 0 ? '' : 'bad')}">${it.got === it.pts ? '✓' : (it.got > 0 ? '½' : '✗')}</td><td>${String(it.got).replace('.', ',')} / ${it.pts}</td></tr>`).join('');
+    root.innerHTML = `
+      <div class="card">
+        <h1>Η υποβολή ολοκληρώθηκε</h1>
+        <div class="muted">${esc(S.name)}${S.tmima ? ' · ' + esc(S.tmima) : ''}</div>
+        <div style="display:flex;gap:28px;align-items:baseline;margin:16px 0">
+          <div><div class="result-big">${String(r.score).replace('.', ',')} / 100</div><div class="muted">μονάδες</div></div>
+          <div><div class="result-big">${String(r.grade20).replace('.', ',')}</div><div class="muted">βαθμός στα 20</div></div>
+        </div>
+        <p class="help">Τη λύση θα τη συζητήσουμε στην τάξη. Ο καθηγητής σου έλαβε τις απαντήσεις σου.</p>
+      </div>
+      <div class="card"><h2>Ανά ερώτημα</h2><table class="res"><tr><th>Ερώτημα</th><th></th><th>Μονάδες</th></tr>${rows}</table></div>`;
+  }
+})();
+</script>
+</body>
+</html>
